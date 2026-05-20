@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Comercial</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#F3F4F6;color:#1A1A2E;min-height:100vh}
+/* ── TOP BAR ── */
+.topbar{background:#1A1A2E;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:15px;font-weight:600;letter-spacing:.03em}
+.topbar span{font-size:11px;color:#9CA3AF}
+/* ── FILTERS ── */
+.filters{background:#fff;border-bottom:1px solid #E5E7EB;padding:10px 24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:sticky;top:41px;z-index:99}
+.filters label{font-size:11px;color:#6B7280;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.filters select{border:1px solid #D1D5DB;border-radius:6px;padding:5px 10px;font-size:12px;color:#1A1A2E;background:#fff;cursor:pointer;outline:none}
+.filters select:focus{border-color:#185FA5}
+.filter-group{display:flex;align-items:center;gap:6px}
+.multi-dd-btn{border:1px solid #D1D5DB;border-radius:6px;padding:5px 28px 5px 10px;font-size:12px;color:#1A1A2E;background:#fff;cursor:pointer;min-width:110px;position:relative;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.multi-dd{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #D1D5DB;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:200;padding:8px 4px;min-width:140px;max-height:260px;overflow-y:auto}
+.multi-dd label{display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:12px;border-radius:4px}
+.multi-dd label:hover{background:#F3F4F6}
+.filter-sep{width:1px;height:20px;background:#E5E7EB}
+/* ── LAYOUT ── */
+.content{padding:20px 24px;max-width:1600px;margin:0 auto}
+.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#9CA3AF;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #E5E7EB}
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:4px}
+.kpi{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:14px 16px}
+.kpi-label{font-size:11px;color:#6B7280;margin-bottom:4px}
+.kpi-value{font-size:24px;font-weight:700;color:#1A1A2E;line-height:1.1}
+.kpi-sub{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px}
+.up{color:#3B6D11}.down{color:#A32D2D}.neutral{color:#6B7280}
+/* ── CHARTS ROW ── */
+.row2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px}
+.row2b{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:16px}
+.card-title{font-size:12px;font-weight:600;color:#374151;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.card-title span{font-size:10px;font-weight:400;color:#9CA3AF}
+canvas{max-height:220px}
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#9CA3AF;padding:6px 8px;border-bottom:1px solid #E5E7EB;font-weight:600}
+td{padding:7px 8px;border-bottom:1px solid #F3F4F6;color:#374151}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F9FAFB}
+.mg-badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600}
+.mg-green{background:#EAF3DE;color:#3B6D11}
+.mg-amber{background:#FAEEDA;color:#854F0B}
+.mg-red{background:#FCEBEB;color:#A32D2D}
+/* ── PANEL LATERAL ── */
+.panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:200}
+.panel-overlay.open{display:block}
+.panel{position:fixed;right:0;top:0;bottom:0;width:340px;background:#fff;border-left:1px solid #E5E7EB;z-index:201;padding:20px;overflow-y:auto;transform:translateX(100%);transition:transform .22s ease}
+.panel.open{transform:none}
+.panel-title{font-size:15px;font-weight:700;color:#1A1A2E;margin-bottom:4px}
+.panel-sub{font-size:11px;color:#9CA3AF;margin-bottom:16px}
+.panel-close{position:absolute;top:16px;right:16px;background:none;border:1px solid #E5E7EB;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;color:#6B7280}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F4F6}
+.stat-label{font-size:11px;color:#6B7280}
+.stat-val{font-size:12px;font-weight:600;color:#1A1A2E}
+/* ── BAR HORIZONTAL ── */
+.hbar-wrap{margin-top:4px}
+.hbar-row{margin-bottom:9px}
+.hbar-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.hbar-track{height:7px;background:#F3F4F6;border-radius:99px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:99px;transition:width .4s}
+/* ── MINI CHART ── */
+.mini-chart{height:80px;margin-top:12px}
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.row2{grid-template-columns:1fr}.row3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.row3{grid-template-columns:1fr}.row2b{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ── LOADING OVERLAY ── -->
+<div id="loading-overlay" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(26,26,46,.92); flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;">
+  <div style="width:44px;height:44px;border:4px solid rgba(255,255,255,.15);
+    border-top-color:#185FA5;border-radius:50%;animation:spin .8s linear infinite"></div>
+  <div id="loading-msg" style="color:#fff;font-size:14px;font-weight:500">Conectando con Google Sheets…</div>
+  <div id="loading-sub" style="color:#9CA3AF;font-size:11px"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<!-- ── API CONFIG BANNER (visible solo hasta configurar) ── -->
+<div id="api-banner" style="
+  display:none; background:#FEF3C7; border-bottom:1px solid #F59E0B;
+  padding:8px 24px; font-size:12px; color:#92400E;
+  align-items:center; justify-content:space-between; gap:12px;">
+  <span>⚠️ <strong>Modo offline</strong> — mostrando datos del último archivo procesado.
+    Configura la API para datos en vivo.</span>
+  <button onclick="document.getElementById('api-banner').style.display='none'"
+    style="background:none;border:none;cursor:pointer;color:#92400E;font-size:16px">✕</button>
+</div>
+
+<div class="topbar">
+  <h1>Dashboard Comercial</h1>
+  <span id="ts-label">Todos los períodos · Todas las empresas · Todos los canales · Todas las familias</span>
+  <span id="data-date" style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0;letter-spacing:.01em">Datos al —</span>
+</div>
+
+<div class="filters">
+  <div class="filter-group"><label>Empresa</label>
+    <select id="f-emp"><option value="">Todas</option><option>(A)</option><option>(B)</option><option>( C )</option></select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group" style="position:relative">
+    <label>Año</label>
+    <div id="year-dropdown-btn" onclick="toggleYearDropdown()" style="border:1px solid #D1D5DB;border-radius:6px;padding:5px 28px 5px 10px;font-size:12px;color:#1A1A2E;background:#fff;cursor:pointer;min-width:110px;position:relative;user-select:none">
+      <span id="year-btn-label">Todos</span>
+      <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6B7280;font-size:10px">▼</span>
+    </div>
+    <div id="year-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #D1D5DB;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:200;padding:8px 4px;min-width:120px">
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:12px;border-radius:4px" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background=''">
+        <input type="checkbox" id="yr-all" checked onchange="onYearAllChange(this)"> Todos
+      </label>
+      <div style="border-top:1px solid #F3F4F6;margin:4px 0"></div>
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:12px;border-radius:4px" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="yr-cb" value="2023" onchange="onYearCbChange()"> 2023
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:12px;border-radius:4px" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="yr-cb" value="2024" onchange="onYearCbChange()"> 2024
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:12px;border-radius:4px" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="yr-cb" value="2025" onchange="onYearCbChange()"> 2025
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:12px;border-radius:4px" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="yr-cb" value="2026" onchange="onYearCbChange()"> 2026
+      </label>
+    </div>
+  </div>
+  <div class="filter-group" style="position:relative">
+    <label>Mes</label>
+    <div class="multi-dd-btn" id="mes-btn" onclick="toggleDD('mes-dd','mes-btn')"><span id="mes-lbl">Todos</span> <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6B7280;font-size:10px">▼</span></div>
+    <div class="multi-dd" id="mes-dd">
+      <label><input type="checkbox" id="mes-all" checked onchange="onAllChange('mes')"> Todos</label>
+      <div style="border-top:1px solid #F3F4F6;margin:4px 0"></div>
+      <label><input type="checkbox" class="mes-cb" value="1" onchange="onCbChange('mes')"> Ene</label>
+      <label><input type="checkbox" class="mes-cb" value="2" onchange="onCbChange('mes')"> Feb</label>
+      <label><input type="checkbox" class="mes-cb" value="3" onchange="onCbChange('mes')"> Mar</label>
+      <label><input type="checkbox" class="mes-cb" value="4" onchange="onCbChange('mes')"> Abr</label>
+      <label><input type="checkbox" class="mes-cb" value="5" onchange="onCbChange('mes')"> May</label>
+      <label><input type="checkbox" class="mes-cb" value="6" onchange="onCbChange('mes')"> Jun</label>
+      <label><input type="checkbox" class="mes-cb" value="7" onchange="onCbChange('mes')"> Jul</label>
+      <label><input type="checkbox" class="mes-cb" value="8" onchange="onCbChange('mes')"> Ago</label>
+      <label><input type="checkbox" class="mes-cb" value="9" onchange="onCbChange('mes')"> Sep</label>
+      <label><input type="checkbox" class="mes-cb" value="10" onchange="onCbChange('mes')"> Oct</label>
+      <label><input type="checkbox" class="mes-cb" value="11" onchange="onCbChange('mes')"> Nov</label>
+      <label><input type="checkbox" class="mes-cb" value="12" onchange="onCbChange('mes')"> Dic</label>
+    </div>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group" style="position:relative">
+    <label>Canal</label>
+    <div class="multi-dd-btn" id="canal-btn" onclick="toggleDD('canal-dd','canal-btn')"><span id="canal-lbl">Todos</span> <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6B7280;font-size:10px">▼</span></div>
+    <div class="multi-dd" id="canal-dd">
+      <label><input type="checkbox" id="canal-all" checked onchange="onAllChange('canal')"> Todos</label>
+      <div style="border-top:1px solid #F3F4F6;margin:4px 0"></div>
+      <div id="canal-options"></div>
+    </div>
+  </div>
+  <div class="filter-group" style="position:relative">
+    <label>Familia</label>
+    <div class="multi-dd-btn" id="fam-btn" onclick="toggleDD('fam-dd','fam-btn')"><span id="fam-lbl">Todas</span> <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6B7280;font-size:10px">▼</span></div>
+    <div class="multi-dd" id="fam-dd">
+      <label><input type="checkbox" id="fam-all" checked onchange="onAllChange('fam')"> Todas</label>
+      <div style="border-top:1px solid #F3F4F6;margin:4px 0"></div>
+      <div id="fam-options"></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- KPIs -->
+  <div class="section-label">resumen ejecutivo</div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Venta Neta</div><div class="kpi-value" id="kv-venta">—</div><div class="kpi-sub neutral" id="kv-yoy">—</div></div>
+    <div class="kpi"><div class="kpi-label">Variación YoY</div><div class="kpi-value" id="kv-yoy-val">—</div><div class="kpi-sub neutral" id="kv-yoy-sub">vs. año anterior</div></div>
+    <div class="kpi"><div class="kpi-label">Margen Neto</div><div class="kpi-value" id="kv-mg">—</div><div class="kpi-sub neutral">sobre venta neta</div></div>
+    <div class="kpi"><div class="kpi-label">Ticket Promedio</div><div class="kpi-value" id="kv-ticket">—</div><div class="kpi-sub neutral" id="kv-pedidos">—</div></div>
+    <div class="kpi"><div class="kpi-label">Total Pedidos</div><div class="kpi-value" id="kv-ord">—</div><div class="kpi-sub neutral" id="kv-uds">—</div></div>
+    <div class="kpi"><div class="kpi-label">Tasa Recompra</div><div class="kpi-value" id="kv-ret">6.3%</div><div class="kpi-sub neutral">560 de 8.845 clientes</div></div>
+  </div>
+
+  <!-- Ventas y Canales -->
+  <div class="section-label">ventas y crecimiento</div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-title">Evolución mensual de venta neta <span id="line-subtitle">comparativo por año</span></div>
+      <canvas id="ch-line" style="max-height:240px"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Venta neta por canal <span>clic para detalle</span></div>
+      <canvas id="ch-canal"></canvas>
+    </div>
+  </div>
+
+  <!-- Rentabilidad -->
+  <div class="section-label">rentabilidad</div>
+  <div class="row2b">
+    <div class="card">
+      <div class="card-title">Margen neto (%) por familia de producto</div>
+      <div id="fam-bars" class="hbar-wrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 12 productos por venta neta</div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Producto</th><th>Familia</th><th>Uds</th><th>Venta Neta</th><th>Margen</th><th>Mg%</th></tr></thead>
+        <tbody id="prod-tbody"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mix Canales -->
+  <div class="section-label">mix de canales</div>
+  <div class="row2b">
+    <div class="card">
+      <div class="card-title">Participación % por canal padre</div>
+      <canvas id="ch-donut" style="max-height:200px"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Margen neto (%) por canal</div>
+      <canvas id="ch-stack"></canvas>
+    </div>
+  </div>
+
+  <!-- Geografía y Logística -->
+  <div class="section-label">clientes y geografía</div>
+  <div class="row2b">
+    <div class="card">
+      <div class="card-title">Top 10 regiones por venta neta</div>
+      <div id="reg-bars" class="hbar-wrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Logística — pedidos y costo por currier</div>
+      <canvas id="ch-currier" style="max-height:180px"></canvas>
+      <div id="currier-table" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- Empresa -->
+  <div class="section-label">desglose por empresa</div>
+  <div class="row3" id="emp-cards"></div>
+
+</div>
+
+<!-- Panel lateral -->
+<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <button class="panel-close" onclick="closePanel()">✕ Cerrar</button>
+  <div class="panel-title" id="p-title">—</div>
+  <div class="panel-sub" id="p-sub">Canal</div>
+  <div id="p-stats"></div>
+  <canvas id="p-minichart" class="mini-chart"></canvas>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATOS REALES
+// ═══════════════════════════════════════
+const RAW = {"monthly":[{"Empresa":"( C )","Año":2023,"Mes":9,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2023,"Mes":10,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2023,"Mes":11,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2023,"Mes":12,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":1,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":2,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":3,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":4,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":5,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":6,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":7,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":8,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":9,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":10,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":11,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2024,"Mes":12,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":1,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":2,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":3,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":4,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":5,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":6,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":7,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":8,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":9,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":10,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":11,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2025,"Mes":12,"venta_neta":84.0,"pedidos":1,"mg_neto":-325.0,"cantidad":1.0},{"Empresa":"( C )","Año":2026,"Mes":1,"venta_neta":2130.0,"pedidos":6,"mg_neto":-323.0,"cantidad":6.0},{"Empresa":"( C )","Año":2026,"Mes":2,"venta_neta":164755.0,"pedidos":5,"mg_neto":99012.0,"cantidad":5.0},{"Empresa":"( C )","Año":2026,"Mes":3,"venta_neta":2653868.0,"pedidos":85,"mg_neto":753387.0,"cantidad":127.0},{"Empresa":"( C )","Año":2026,"Mes":4,"venta_neta":2295273.0,"pedidos":84,"mg_neto":569737.0,"cantidad":157.0},{"Empresa":"( C )","Año":2026,"Mes":5,"venta_neta":1091616.0,"pedidos":47,"mg_neto":397083.0,"cantidad":59.0},{"Empresa":"(A)","Año":2023,"Mes":9,"venta_neta":634455.0,"pedidos":9,"mg_neto":337453.0,"cantidad":11.0},{"Empresa":"(A)","Año":2023,"Mes":10,"venta_neta":1197373.0,"pedidos":18,"mg_neto":551433.0,"cantidad":24.0},{"Empresa":"(A)","Año":2023,"Mes":11,"venta_neta":3097933.0,"pedidos":30,"mg_neto":1562042.0,"cantidad":57.0},{"Empresa":"(A)","Año":2023,"Mes":12,"venta_neta":2159412.0,"pedidos":32,"mg_neto":877135.0,"cantidad":41.0},{"Empresa":"(A)","Año":2024,"Mes":1,"venta_neta":3553235.0,"pedidos":52,"mg_neto":790819.0,"cantidad":58.0},{"Empresa":"(A)","Año":2024,"Mes":2,"venta_neta":4302586.0,"pedidos":62,"mg_neto":1096027.0,"cantidad":70.0},{"Empresa":"(A)","Año":2024,"Mes":3,"venta_neta":11258292.0,"pedidos":148,"mg_neto":3725604.0,"cantidad":190.0},{"Empresa":"(A)","Año":2024,"Mes":4,"venta_neta":11714163.0,"pedidos":197,"mg_neto":3209028.0,"cantidad":207.0},{"Empresa":"(A)","Año":2024,"Mes":5,"venta_neta":10781371.0,"pedidos":141,"mg_neto":2999989.0,"cantidad":153.0},{"Empresa":"(A)","Año":2024,"Mes":6,"venta_neta":11495813.0,"pedidos":235,"mg_neto":2895215.0,"cantidad":258.0},{"Empresa":"(A)","Año":2024,"Mes":7,"venta_neta":10648914.0,"pedidos":233,"mg_neto":1937188.0,"cantidad":438.0},{"Empresa":"(A)","Año":2024,"Mes":8,"venta_neta":10997292.0,"pedidos":230,"mg_neto":1988044.0,"cantidad":231.0},{"Empresa":"(A)","Año":2024,"Mes":9,"venta_neta":11674027.0,"pedidos":227,"mg_neto":2597256.0,"cantidad":224.0},{"Empresa":"(A)","Año":2024,"Mes":10,"venta_neta":18708197.0,"pedidos":359,"mg_neto":4465174.0,"cantidad":380.0},{"Empresa":"(A)","Año":2024,"Mes":11,"venta_neta":19064395.0,"pedidos":375,"mg_neto":3923548.0,"cantidad":376.0},{"Empresa":"(A)","Año":2024,"Mes":12,"venta_neta":25331249.0,"pedidos":444,"mg_neto":5806073.0,"cantidad":468.0},{"Empresa":"(A)","Año":2025,"Mes":1,"venta_neta":21087217.0,"pedidos":341,"mg_neto":6160735.0,"cantidad":386.0},{"Empresa":"(A)","Año":2025,"Mes":2,"venta_neta":14237571.0,"pedidos":273,"mg_neto":3742509.0,"cantidad":274.0},{"Empresa":"(A)","Año":2025,"Mes":3,"venta_neta":20005078.0,"pedidos":357,"mg_neto":6115956.0,"cantidad":401.0},{"Empresa":"(A)","Año":2025,"Mes":4,"venta_neta":19110847.0,"pedidos":330,"mg_neto":5379670.0,"cantidad":349.0},{"Empresa":"(A)","Año":2025,"Mes":5,"venta_neta":16133985.0,"pedidos":315,"mg_neto":5203391.0,"cantidad":339.0},{"Empresa":"(A)","Año":2025,"Mes":6,"venta_neta":19596937.0,"pedidos":401,"mg_neto":5943080.0,"cantidad":399.0},{"Empresa":"(A)","Año":2025,"Mes":7,"venta_neta":17874996.0,"pedidos":353,"mg_neto":6031216.0,"cantidad":440.0},{"Empresa":"(A)","Año":2025,"Mes":8,"venta_neta":15901910.0,"pedidos":364,"mg_neto":5419667.0,"cantidad":468.0},{"Empresa":"(A)","Año":2025,"Mes":9,"venta_neta":16718397.0,"pedidos":321,"mg_neto":4959062.0,"cantidad":689.0},{"Empresa":"(A)","Año":2025,"Mes":10,"venta_neta":23466389.0,"pedidos":446,"mg_neto":7331559.0,"cantidad":696.0},{"Empresa":"(A)","Año":2025,"Mes":11,"venta_neta":20825393.0,"pedidos":365,"mg_neto":6523844.0,"cantidad":570.0},{"Empresa":"(A)","Año":2025,"Mes":12,"venta_neta":22620020.0,"pedidos":466,"mg_neto":7033179.0,"cantidad":723.0},{"Empresa":"(A)","Año":2026,"Mes":1,"venta_neta":16343821.0,"pedidos":383,"mg_neto":4704826.0,"cantidad":570.0},{"Empresa":"(A)","Año":2026,"Mes":2,"venta_neta":13453931.0,"pedidos":394,"mg_neto":4055875.0,"cantidad":502.0},{"Empresa":"(A)","Año":2026,"Mes":3,"venta_neta":15434399.0,"pedidos":453,"mg_neto":4921606.0,"cantidad":685.0},{"Empresa":"(A)","Año":2026,"Mes":4,"venta_neta":16204122.0,"pedidos":363,"mg_neto":5571270.0,"cantidad":676.0},{"Empresa":"(A)","Año":2026,"Mes":5,"venta_neta":2343428.0,"pedidos":57,"mg_neto":1186738.0,"cantidad":81.0},{"Empresa":"(B)","Año":2023,"Mes":9,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2023,"Mes":10,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2023,"Mes":11,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2023,"Mes":12,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":1,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":2,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":3,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":4,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":5,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":6,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":7,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":8,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":9,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":10,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":11,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2024,"Mes":12,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2025,"Mes":1,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2025,"Mes":2,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2025,"Mes":3,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2025,"Mes":4,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2025,"Mes":5,"venta_neta":1.0,"pedidos":1,"mg_neto":-408.0,"cantidad":1.0},{"Empresa":"(B)","Año":2025,"Mes":6,"venta_neta":25203.0,"pedidos":2,"mg_neto":3046.0,"cantidad":2.0},{"Empresa":"(B)","Año":2025,"Mes":7,"venta_neta":1496308.0,"pedidos":41,"mg_neto":289268.0,"cantidad":41.0},{"Empresa":"(B)","Año":2025,"Mes":8,"venta_neta":3315124.0,"pedidos":60,"mg_neto":1035755.0,"cantidad":69.0},{"Empresa":"(B)","Año":2025,"Mes":9,"venta_neta":6147669.0,"pedidos":117,"mg_neto":1794477.0,"cantidad":193.0},{"Empresa":"(B)","Año":2025,"Mes":10,"venta_neta":8608546.0,"pedidos":141,"mg_neto":2476751.0,"cantidad":198.0},{"Empresa":"(B)","Año":2025,"Mes":11,"venta_neta":8263412.0,"pedidos":165,"mg_neto":2323736.0,"cantidad":205.0},{"Empresa":"(B)","Año":2025,"Mes":12,"venta_neta":9526227.0,"pedidos":198,"mg_neto":2569275.0,"cantidad":236.0},{"Empresa":"(B)","Año":2026,"Mes":1,"venta_neta":6651915.0,"pedidos":128,"mg_neto":1890502.0,"cantidad":180.0},{"Empresa":"(B)","Año":2026,"Mes":2,"venta_neta":4727310.0,"pedidos":87,"mg_neto":1482113.0,"cantidad":121.0},{"Empresa":"(B)","Año":2026,"Mes":3,"venta_neta":5720829.0,"pedidos":192,"mg_neto":1754940.0,"cantidad":227.0},{"Empresa":"(B)","Año":2026,"Mes":4,"venta_neta":5595417.0,"pedidos":153,"mg_neto":2123694.0,"cantidad":174.0},{"Empresa":"(B)","Año":2026,"Mes":5,"venta_neta":1212145.0,"pedidos":32,"mg_neto":621429.0,"cantidad":38.0}],"canales":[{"Canal Padre":"Directo","venta_neta":51709830.0,"pedidos":800,"mg_neto":12223675.0,"comision":547026.0,"costo_envio":218921.0,"mg_pct":0.2364,"ticket":64637.0,"com_pct":0.0106},{"Canal Padre":"Dropshipping","venta_neta":22202.0,"pedidos":1,"mg_neto":4579.0,"comision":0.0,"costo_envio":4496.0,"mg_pct":0.2062,"ticket":22202.0,"com_pct":0.0},{"Canal Padre":"Falabella","venta_neta":182634307.0,"pedidos":3337,"mg_neto":55643741.0,"comision":27716754.0,"costo_envio":16643424.0,"mg_pct":0.3047,"ticket":54730.0,"com_pct":0.1518},{"Canal Padre":"Hites","venta_neta":10069198.0,"pedidos":209,"mg_neto":2583349.0,"comision":1689155.0,"costo_envio":27510.0,"mg_pct":0.2566,"ticket":48178.0,"com_pct":0.1678},{"Canal Padre":"Instagram","venta_neta":1062437.0,"pedidos":25,"mg_neto":535473.0,"comision":26550.0,"costo_envio":21042.0,"mg_pct":0.504,"ticket":42497.0,"com_pct":0.025},{"Canal Padre":"Jump Seller","venta_neta":519962.0,"pedidos":5,"mg_neto":135229.0,"comision":11011.0,"costo_envio":40902.0,"mg_pct":0.2601,"ticket":103992.0,"com_pct":0.0212},{"Canal Padre":"Lider","venta_neta":17129876.0,"pedidos":556,"mg_neto":3331488.0,"comision":2448477.0,"costo_envio":1124754.0,"mg_pct":0.1945,"ticket":30809.0,"com_pct":0.1429},{"Canal Padre":"MP Facebook","venta_neta":12144533.0,"pedidos":188,"mg_neto":3783491.0,"comision":77370.0,"costo_envio":327068.0,"mg_pct":0.3115,"ticket":64599.0,"com_pct":0.0064},{"Canal Padre":"Mercado Libre","venta_neta":186520381.0,"pedidos":4342,"mg_neto":50225452.0,"comision":29675870.0,"costo_envio":19164328.0,"mg_pct":0.2693,"ticket":42957.0,"com_pct":0.1591},{"Canal Padre":"Paris","venta_neta":30877101.0,"pedidos":561,"mg_neto":10792582.0,"comision":4339115.0,"costo_envio":2022349.0,"mg_pct":0.3495,"ticket":55039.0,"com_pct":0.1405},{"Canal Padre":"Página Web","venta_neta":11938208.0,"pedidos":129,"mg_neto":6392189.0,"comision":414953.0,"costo_envio":494421.0,"mg_pct":0.5354,"ticket":92544.0,"com_pct":0.0348},{"Canal Padre":"Ripley","venta_neta":10651911.0,"pedidos":211,"mg_neto":3487332.0,"comision":1860372.0,"costo_envio":490384.0,"mg_pct":0.3274,"ticket":50483.0,"com_pct":0.1747},{"Canal Padre":"Tik Tok","venta_neta":197319.0,"pedidos":2,"mg_neto":73849.0,"comision":0.0,"costo_envio":5000.0,"mg_pct":0.3743,"ticket":98660.0,"com_pct":0.0}],"canal_monthly":[{"Año":2023,"Mes":9,"Canal Padre":"Directo","venta_neta":169.0},{"Año":2023,"Mes":9,"Canal Padre":"Falabella","venta_neta":84025.0},{"Año":2023,"Mes":9,"Canal Padre":"Instagram","venta_neta":58815.0},{"Año":2023,"Mes":9,"Canal Padre":"MP Facebook","venta_neta":302479.0},{"Año":2023,"Mes":9,"Canal Padre":"Mercado Libre","venta_neta":189051.0},{"Año":2023,"Mes":10,"Canal Padre":"Directo","venta_neta":134606.0},{"Año":2023,"Mes":10,"Canal Padre":"Falabella","venta_neta":410857.0},{"Año":2023,"Mes":10,"Canal Padre":"MP Facebook","venta_neta":277277.0},{"Año":2023,"Mes":10,"Canal Padre":"Mercado Libre","venta_neta":368844.0},{"Año":2023,"Mes":10,"Canal Padre":"Página Web","venta_neta":5874.0},{"Año":2023,"Mes":11,"Canal Padre":"Directo","venta_neta":169.0},{"Año":2023,"Mes":11,"Canal Padre":"Falabella","venta_neta":470513.0},{"Año":2023,"Mes":11,"Canal Padre":"Instagram","venta_neta":191563.0},{"Año":2023,"Mes":11,"Canal Padre":"MP Facebook","venta_neta":107546.0},{"Año":2023,"Mes":11,"Canal Padre":"Mercado Libre","venta_neta":734345.0},{"Año":2023,"Mes":11,"Canal Padre":"Página Web","venta_neta":1593882.0},{"Año":2023,"Mes":12,"Canal Padre":"Directo","venta_neta":169.0},{"Año":2023,"Mes":12,"Canal Padre":"Instagram","venta_neta":117630.0},{"Año":2023,"Mes":12,"Canal Padre":"Mercado Libre","venta_neta":1527479.0},{"Año":2023,"Mes":12,"Canal Padre":"Página Web","venta_neta":514218.0},{"Año":2024,"Mes":1,"Canal Padre":"Directo","venta_neta":526001.0},{"Año":2024,"Mes":1,"Canal Padre":"Falabella","venta_neta":949462.0},{"Año":2024,"Mes":1,"Canal Padre":"Mercado Libre","venta_neta":1741782.0},{"Año":2024,"Mes":1,"Canal Padre":"Paris","venta_neta":134429.0},{"Año":2024,"Mes":1,"Canal Padre":"Página Web","venta_neta":58807.0},{"Año":2024,"Mes":1,"Canal Padre":"Ripley","venta_neta":142840.0},{"Año":2024,"Mes":2,"Canal Padre":"Directo","venta_neta":131199.0},{"Año":2024,"Mes":2,"Canal Padre":"Falabella","venta_neta":1058731.0},{"Año":2024,"Mes":2,"Canal Padre":"MP Facebook","venta_neta":313412.0},{"Año":2024,"Mes":2,"Canal Padre":"Mercado Libre","venta_neta":1860799.0},{"Año":2024,"Mes":2,"Canal Padre":"Paris","venta_neta":75622.0},{"Año":2024,"Mes":2,"Canal Padre":"Página Web","venta_neta":428496.0},{"Año":2024,"Mes":2,"Canal Padre":"Ripley","venta_neta":336092.0},{"Año":2024,"Mes":3,"Canal Padre":"Directo","venta_neta":2407845.0},{"Año":2024,"Mes":3,"Canal Padre":"Falabella","venta_neta":2915664.0},{"Año":2024,"Mes":3,"Canal Padre":"MP Facebook","venta_neta":1034496.0},{"Año":2024,"Mes":3,"Canal Padre":"Mercado Libre","venta_neta":3935910.0},{"Año":2024,"Mes":3,"Canal Padre":"Paris","venta_neta":277277.0},{"Año":2024,"Mes":3,"Canal Padre":"Página Web","venta_neta":243655.0},{"Año":2024,"Mes":3,"Canal Padre":"Ripley","venta_neta":428529.0},{"Año":2024,"Mes":4,"Canal Padre":"Directo","venta_neta":609203.0},{"Año":2024,"Mes":4,"Canal Padre":"Falabella","venta_neta":3902908.0},{"Año":2024,"Mes":4,"Canal Padre":"Hites","venta_neta":432714.0},{"Año":2024,"Mes":4,"Canal Padre":"Lider","venta_neta":168050.0},{"Año":2024,"Mes":4,"Canal Padre":"Mercado Libre","venta_neta":5476971.0},{"Año":2024,"Mes":4,"Canal Padre":"Paris","venta_neta":117622.0},{"Año":2024,"Mes":4,"Canal Padre":"Página Web","venta_neta":352908.0},{"Año":2024,"Mes":4,"Canal Padre":"Ripley","venta_neta":478933.0},{"Año":2024,"Mes":5,"Canal Padre":"Directo","venta_neta":2531810.0},{"Año":2024,"Mes":5,"Canal Padre":"Falabella","venta_neta":3433193.0},{"Año":2024,"Mes":5,"Canal Padre":"Hites","venta_neta":449513.0},{"Año":2024,"Mes":5,"Canal Padre":"Lider","venta_neta":109235.0},{"Año":2024,"Mes":5,"Canal Padre":"Mercado Libre","venta_neta":3730571.0},{"Año":2024,"Mes":5,"Canal Padre":"Página Web","venta_neta":181471.0},{"Año":2024,"Mes":5,"Canal Padre":"Ripley","venta_neta":285664.0},{"Año":2024,"Mes":6,"Canal Padre":"Directo","venta_neta":522169.0},{"Año":2024,"Mes":6,"Canal Padre":"Falabella","venta_neta":4852891.0},{"Año":2024,"Mes":6,"Canal Padre":"Hites","venta_neta":382261.0},{"Año":2024,"Mes":6,"Canal Padre":"Lider","venta_neta":372202.0},{"Año":2024,"Mes":6,"Canal Padre":"Mercado Libre","venta_neta":4068048.0},{"Año":2024,"Mes":6,"Canal Padre":"Paris","venta_neta":853672.0},{"Año":2024,"Mes":6,"Canal Padre":"Página Web","venta_neta":58807.0},{"Año":2024,"Mes":6,"Canal Padre":"Ripley","venta_neta":268857.0},{"Año":2024,"Mes":7,"Canal Padre":"Directo","venta_neta":793522.0},{"Año":2024,"Mes":7,"Canal Padre":"Falabella","venta_neta":3845084.0},{"Año":2024,"Mes":7,"Canal Padre":"Hites","venta_neta":1187941.0},{"Año":2024,"Mes":7,"Canal Padre":"Lider","venta_neta":363808.0},{"Año":2024,"Mes":7,"Canal Padre":"Mercado Libre","venta_neta":3494770.0},{"Año":2024,"Mes":7,"Canal Padre":"Paris","venta_neta":162975.0},{"Año":2024,"Mes":7,"Canal Padre":"Página Web","venta_neta":201630.0},{"Año":2024,"Mes":7,"Canal Padre":"Ripley","venta_neta":319269.0},{"Año":2024,"Mes":8,"Canal Padre":"Falabella","venta_neta":4700042.0},{"Año":2024,"Mes":8,"Canal Padre":"Hites","venta_neta":625908.0},{"Año":2024,"Mes":8,"Canal Padre":"Lider","venta_neta":610807.0},{"Año":2024,"Mes":8,"Canal Padre":"Mercado Libre","venta_neta":3671645.0},{"Año":2024,"Mes":8,"Canal Padre":"Paris","venta_neta":674622.0},{"Año":2024,"Mes":8,"Canal Padre":"Página Web","venta_neta":462109.0},{"Año":2024,"Mes":8,"Canal Padre":"Ripley","venta_neta":252076.0},{"Año":2024,"Mes":9,"Canal Padre":"Directo","venta_neta":691673.0},{"Año":2024,"Mes":9,"Canal Padre":"Falabella","venta_neta":4678286.0},{"Año":2024,"Mes":9,"Canal Padre":"Hites","venta_neta":367151.0},{"Año":2024,"Mes":9,"Canal Padre":"Lider","venta_neta":766253.0},{"Año":2024,"Mes":9,"Canal Padre":"Mercado Libre","venta_neta":4115471.0},{"Año":2024,"Mes":9,"Canal Padre":"Paris","venta_neta":408311.0},{"Año":2024,"Mes":9,"Canal Padre":"Página Web","venta_neta":50403.0},{"Año":2024,"Mes":9,"Canal Padre":"Ripley","venta_neta":596563.0},{"Año":2024,"Mes":10,"Canal Padre":"Directo","venta_neta":2183999.0},{"Año":2024,"Mes":10,"Canal Padre":"Falabella","venta_neta":6233479.0},{"Año":2024,"Mes":10,"Canal Padre":"Hites","venta_neta":522580.0},{"Año":2024,"Mes":10,"Canal Padre":"Lider","venta_neta":654447.0},{"Año":2024,"Mes":10,"Canal Padre":"Mercado Libre","venta_neta":7899953.0},{"Año":2024,"Mes":10,"Canal Padre":"Paris","venta_neta":474714.0},{"Año":2024,"Mes":10,"Canal Padre":"Página Web","venta_neta":220917.0},{"Año":2024,"Mes":10,"Canal Padre":"Ripley","venta_neta":342790.0},{"Año":2024,"Mes":11,"Canal Padre":"Falabella","venta_neta":7922437.0},{"Año":2024,"Mes":11,"Canal Padre":"Hites","venta_neta":619210.0},{"Año":2024,"Mes":11,"Canal Padre":"Lider","venta_neta":1255891.0},{"Año":2024,"Mes":11,"Canal Padre":"MP Facebook","venta_neta":463403.0},{"Año":2024,"Mes":11,"Canal Padre":"Mercado Libre","venta_neta":7774118.0},{"Año":2024,"Mes":11,"Canal Padre":"Paris","venta_neta":235269.0},{"Año":2024,"Mes":11,"Canal Padre":"Página Web","venta_neta":483101.0},{"Año":2024,"Mes":11,"Canal Padre":"Ripley","venta_neta":310882.0},{"Año":2024,"Mes":12,"Canal Padre":"Directo","venta_neta":163959.0},{"Año":2024,"Mes":12,"Canal Padre":"Falabella","venta_neta":8531555.0},{"Año":2024,"Mes":12,"Canal Padre":"Hites","venta_neta":419227.0},{"Año":2024,"Mes":12,"Canal Padre":"Lider","venta_neta":936672.0},{"Año":2024,"Mes":12,"Canal Padre":"MP Facebook","venta_neta":746807.0},{"Año":2024,"Mes":12,"Canal Padre":"Mercado Libre","venta_neta":12840239.0},{"Año":2024,"Mes":12,"Canal Padre":"Paris","venta_neta":856992.0},{"Año":2024,"Mes":12,"Canal Padre":"Página Web","venta_neta":58815.0},{"Año":2024,"Mes":12,"Canal Padre":"Ripley","venta_neta":562966.0},{"Año":2025,"Mes":1,"Canal Padre":"Directo","venta_neta":1337651.0},{"Año":2025,"Mes":1,"Canal Padre":"Falabella","venta_neta":5288303.0},{"Año":2025,"Mes":1,"Canal Padre":"Hites","venta_neta":428521.0},{"Año":2025,"Mes":1,"Canal Padre":"Lider","venta_neta":457832.0},{"Año":2025,"Mes":1,"Canal Padre":"MP Facebook","venta_neta":1472025.0},{"Año":2025,"Mes":1,"Canal Padre":"Mercado Libre","venta_neta":9672760.0},{"Año":2025,"Mes":1,"Canal Padre":"Paris","venta_neta":1768714.0},{"Año":2025,"Mes":1,"Canal Padre":"Página Web","venta_neta":158790.0},{"Año":2025,"Mes":1,"Canal Padre":"Ripley","venta_neta":403303.0},{"Año":2025,"Mes":2,"Canal Padre":"Directo","venta_neta":735339.0},{"Año":2025,"Mes":2,"Canal Padre":"Falabella","venta_neta":3316532.0},{"Año":2025,"Mes":2,"Canal Padre":"Hites","venta_neta":264647.0},{"Año":2025,"Mes":2,"Canal Padre":"Lider","venta_neta":926664.0},{"Año":2025,"Mes":2,"Canal Padre":"MP Facebook","venta_neta":361990.0},{"Año":2025,"Mes":2,"Canal Padre":"Mercado Libre","venta_neta":6834400.0},{"Año":2025,"Mes":2,"Canal Padre":"Paris","venta_neta":1218336.0},{"Año":2025,"Mes":2,"Canal Padre":"Página Web","venta_neta":394899.0},{"Año":2025,"Mes":2,"Canal Padre":"Ripley","venta_neta":184849.0},{"Año":2025,"Mes":3,"Canal Padre":"Directo","venta_neta":1341317.0},{"Año":2025,"Mes":3,"Canal Padre":"Falabella","venta_neta":5103437.0},{"Año":2025,"Mes":3,"Canal Padre":"Hites","venta_neta":842714.0},{"Año":2025,"Mes":3,"Canal Padre":"Lider","venta_neta":935126.0},{"Año":2025,"Mes":3,"Canal Padre":"MP Facebook","venta_neta":1993496.0},{"Año":2025,"Mes":3,"Canal Padre":"Mercado Libre","venta_neta":7205518.0},{"Año":2025,"Mes":3,"Canal Padre":"Paris","venta_neta":1466084.0},{"Año":2025,"Mes":3,"Canal Padre":"Página Web","venta_neta":735193.0},{"Año":2025,"Mes":3,"Canal Padre":"Ripley","venta_neta":306664.0},{"Año":2025,"Mes":4,"Canal Padre":"Directo","venta_neta":578783.0},{"Año":2025,"Mes":4,"Canal Padre":"Falabella","venta_neta":5199202.0},{"Año":2025,"Mes":4,"Canal Padre":"Hites","venta_neta":314252.0},{"Año":2025,"Mes":4,"Canal Padre":"Lider","venta_neta":1068252.0},{"Año":2025,"Mes":4,"Canal Padre":"MP Facebook","venta_neta":581000.0},{"Año":2025,"Mes":4,"Canal Padre":"Mercado Libre","venta_neta":6685141.0},{"Año":2025,"Mes":4,"Canal Padre":"Paris","venta_neta":3970151.0},{"Año":2025,"Mes":4,"Canal Padre":"Página Web","venta_neta":302471.0},{"Año":2025,"Mes":4,"Canal Padre":"Ripley","venta_neta":411681.0},{"Año":2025,"Mes":5,"Canal Padre":"Directo","venta_neta":1087114.0},{"Año":2025,"Mes":5,"Canal Padre":"Falabella","venta_neta":5589857.0},{"Año":2025,"Mes":5,"Canal Padre":"Hites","venta_neta":411706.0},{"Año":2025,"Mes":5,"Canal Padre":"Lider","venta_neta":865277.0},{"Año":2025,"Mes":5,"Canal Padre":"MP Facebook","venta_neta":1018496.0},{"Año":2025,"Mes":5,"Canal Padre":"Mercado Libre","venta_neta":5446055.0},{"Año":2025,"Mes":5,"Canal Padre":"Paris","venta_neta":1186353.0},{"Año":2025,"Mes":5,"Canal Padre":"Página Web","venta_neta":285571.0},{"Año":2025,"Mes":5,"Canal Padre":"Ripley","venta_neta":243641.0},{"Año":2025,"Mes":6,"Canal Padre":"Directo","venta_neta":655177.0},{"Año":2025,"Mes":6,"Canal Padre":"Falabella","venta_neta":8951545.0},{"Año":2025,"Mes":6,"Canal Padre":"Hites","venta_neta":478941.0},{"Año":2025,"Mes":6,"Canal Padre":"Lider","venta_neta":767042.0},{"Año":2025,"Mes":6,"Canal Padre":"MP Facebook","venta_neta":493000.0},{"Año":2025,"Mes":6,"Canal Padre":"Mercado Libre","venta_neta":5743081.0},{"Año":2025,"Mes":6,"Canal Padre":"Paris","venta_neta":1544277.0},{"Año":2025,"Mes":6,"Canal Padre":"Página Web","venta_neta":307521.0},{"Año":2025,"Mes":6,"Canal Padre":"Ripley","venta_neta":681639.0},{"Año":2025,"Mes":7,"Canal Padre":"Directo","venta_neta":1832239.0},{"Año":2025,"Mes":7,"Canal Padre":"Falabella","venta_neta":7857437.0},{"Año":2025,"Mes":7,"Canal Padre":"Lider","venta_neta":612412.0},{"Año":2025,"Mes":7,"Canal Padre":"MP Facebook","venta_neta":243462.0},{"Año":2025,"Mes":7,"Canal Padre":"Mercado Libre","venta_neta":6543476.0},{"Año":2025,"Mes":7,"Canal Padre":"Paris","venta_neta":1083034.0},{"Año":2025,"Mes":7,"Canal Padre":"Página Web","venta_neta":453630.0},{"Año":2025,"Mes":7,"Canal Padre":"Ripley","venta_neta":495697.0},{"Año":2025,"Mes":8,"Canal Padre":"Directo","venta_neta":3020281.0},{"Año":2025,"Mes":8,"Canal Padre":"Falabella","venta_neta":7292572.0},{"Año":2025,"Mes":8,"Canal Padre":"Hites","venta_neta":193235.0},{"Año":2025,"Mes":8,"Canal Padre":"Lider","venta_neta":506538.0},{"Año":2025,"Mes":8,"Canal Padre":"MP Facebook","venta_neta":417246.0},{"Año":2025,"Mes":8,"Canal Padre":"Mercado Libre","venta_neta":5368445.0},{"Año":2025,"Mes":8,"Canal Padre":"Paris","venta_neta":1614908.0},{"Año":2025,"Mes":8,"Canal Padre":"Página Web","venta_neta":210615.0},{"Año":2025,"Mes":8,"Canal Padre":"Ripley","venta_neta":319277.0},{"Año":2025,"Mes":9,"Canal Padre":"Directo","venta_neta":3996790.0},{"Año":2025,"Mes":9,"Canal Padre":"Falabella","venta_neta":7866429.0},{"Año":2025,"Mes":9,"Canal Padre":"Hites","venta_neta":336092.0},{"Año":2025,"Mes":9,"Canal Padre":"Lider","venta_neta":982882.0},{"Año":2025,"Mes":9,"Canal Padre":"MP Facebook","venta_neta":287395.0},{"Año":2025,"Mes":9,"Canal Padre":"Mercado Libre","venta_neta":7080259.0},{"Año":2025,"Mes":9,"Canal Padre":"Paris","venta_neta":990597.0},{"Año":2025,"Mes":9,"Canal Padre":"Página Web","venta_neta":918210.0},{"Año":2025,"Mes":9,"Canal Padre":"Ripley","venta_neta":407496.0},{"Año":2025,"Mes":10,"Canal Padre":"Directo","venta_neta":4217323.0},{"Año":2025,"Mes":10,"Canal Padre":"Falabella","venta_neta":12338319.0},{"Año":2025,"Mes":10,"Canal Padre":"Hites","venta_neta":222664.0},{"Año":2025,"Mes":10,"Canal Padre":"Lider","venta_neta":998813.0},{"Año":2025,"Mes":10,"Canal Padre":"MP Facebook","venta_neta":330000.0},{"Año":2025,"Mes":10,"Canal Padre":"Mercado Libre","venta_neta":10234924.0},{"Año":2025,"Mes":10,"Canal Padre":"Paris","venta_neta":1846681.0},{"Año":2025,"Mes":10,"Canal Padre":"Página Web","venta_neta":1282235.0},{"Año":2025,"Mes":10,"Canal Padre":"Ripley","venta_neta":604059.0},{"Año":2025,"Mes":11,"Canal Padre":"Directo","venta_neta":4798846.0},{"Año":2025,"Mes":11,"Canal Padre":"Falabella","venta_neta":11215934.0},{"Año":2025,"Mes":11,"Canal Padre":"Hites","venta_neta":547192.0},{"Año":2025,"Mes":11,"Canal Padre":"Lider","venta_neta":684571.0},{"Año":2025,"Mes":11,"Canal Padre":"MP Facebook","venta_neta":603827.0},{"Año":2025,"Mes":11,"Canal Padre":"Mercado Libre","venta_neta":9075989.0},{"Año":2025,"Mes":11,"Canal Padre":"Paris","venta_neta":1617277.0},{"Año":2025,"Mes":11,"Canal Padre":"Página Web","venta_neta":151235.0},{"Año":2025,"Mes":11,"Canal Padre":"Ripley","venta_neta":394017.0},{"Año":2025,"Mes":12,"Canal Padre":"Directo","venta_neta":5910537.0},{"Año":2025,"Mes":12,"Canal Padre":"Falabella","venta_neta":11800445.0},{"Año":2025,"Mes":12,"Canal Padre":"Hites","venta_neta":396755.0},{"Año":2025,"Mes":12,"Canal Padre":"Lider","venta_neta":512471.0},{"Año":2025,"Mes":12,"Canal Padre":"Mercado Libre","venta_neta":11141148.0},{"Año":2025,"Mes":12,"Canal Padre":"Paris","venta_neta":1398773.0},{"Año":2025,"Mes":12,"Canal Padre":"Página Web","venta_neta":209210.0},{"Año":2025,"Mes":12,"Canal Padre":"Ripley","venta_neta":485420.0},{"Año":2026,"Mes":1,"Canal Padre":"Directo","venta_neta":2018062.0},{"Año":2026,"Mes":1,"Canal Padre":"Falabella","venta_neta":8834850.0},{"Año":2026,"Mes":1,"Canal Padre":"Hites","venta_neta":315092.0},{"Año":2026,"Mes":1,"Canal Padre":"Lider","venta_neta":932580.0},{"Año":2026,"Mes":1,"Canal Padre":"MP Facebook","venta_neta":232227.0},{"Año":2026,"Mes":1,"Canal Padre":"Mercado Libre","venta_neta":7553734.0},{"Año":2026,"Mes":1,"Canal Padre":"Paris","venta_neta":1661092.0},{"Año":2026,"Mes":1,"Canal Padre":"Página Web","venta_neta":1032658.0},{"Año":2026,"Mes":1,"Canal Padre":"Ripley","venta_neta":417571.0},{"Año":2026,"Mes":2,"Canal Padre":"Directo","venta_neta":909807.0},{"Año":2026,"Mes":2,"Canal Padre":"Falabella","venta_neta":8167538.0},{"Año":2026,"Mes":2,"Canal Padre":"Hites","venta_neta":268882.0},{"Año":2026,"Mes":2,"Canal Padre":"Lider","venta_neta":961546.0},{"Año":2026,"Mes":2,"Canal Padre":"Mercado Libre","venta_neta":6241037.0},{"Año":2026,"Mes":2,"Canal Padre":"Paris","venta_neta":1401496.0},{"Año":2026,"Mes":2,"Canal Padre":"Página Web","venta_neta":193252.0},{"Año":2026,"Mes":2,"Canal Padre":"Ripley","venta_neta":202437.0},{"Año":2026,"Mes":3,"Canal Padre":"Directo","venta_neta":4060389.0},{"Año":2026,"Mes":3,"Canal Padre":"Falabella","venta_neta":8253723.0},{"Año":2026,"Mes":3,"Canal Padre":"Lider","venta_neta":207496.0},{"Año":2026,"Mes":3,"Canal Padre":"Mercado Libre","venta_neta":9066639.0},{"Año":2026,"Mes":3,"Canal Padre":"Paris","venta_neta":1518134.0},{"Año":2026,"Mes":3,"Canal Padre":"Página Web","venta_neta":387623.0},{"Año":2026,"Mes":3,"Canal Padre":"Ripley","venta_neta":235277.0},{"Año":2026,"Mes":4,"Canal Padre":"Directo","venta_neta":4398629.0},{"Año":2026,"Mes":4,"Canal Padre":"Falabella","venta_neta":9417629.0},{"Año":2026,"Mes":4,"Canal Padre":"Lider","venta_neta":355370.0},{"Año":2026,"Mes":4,"Canal Padre":"Mercado Libre","venta_neta":7409882.0},{"Año":2026,"Mes":4,"Canal Padre":"Paris","venta_neta":1918101.0},{"Año":2026,"Mes":4,"Canal Padre":"Ripley","venta_neta":480504.0},{"Año":2026,"Mes":5,"Canal Padre":"Directo","venta_neta":114715.0},{"Año":2026,"Mes":5,"Canal Padre":"Falabella","venta_neta":2151429.0},{"Año":2026,"Mes":5,"Canal Padre":"Lider","venta_neta":117639.0},{"Año":2026,"Mes":5,"Canal Padre":"Mercado Libre","venta_neta":1787901.0},{"Año":2026,"Mes":5,"Canal Padre":"Paris","venta_neta":401588.0},{"Año":2026,"Mes":5,"Canal Padre":"Ripley","venta_neta":52916.0}],"familias":[{"Familia":"Aspiradora","venta_neta":5349729.0,"pedidos":197,"mg_neto":1704173.0,"cantidad":211.0,"mg_pct":0.3186},{"Familia":"Bebé","venta_neta":89173173.0,"pedidos":3338,"mg_neto":15623634.0,"cantidad":3375.0,"mg_pct":0.1752},{"Familia":"Dispensador","venta_neta":162721382.0,"pedidos":1671,"mg_neto":30563740.0,"cantidad":1778.0,"mg_pct":0.1878},{"Familia":"Impresora","venta_neta":9598676.0,"pedidos":177,"mg_neto":1046386.0,"cantidad":263.0,"mg_pct":0.109},{"Familia":"Maceteros","venta_neta":11251602.0,"pedidos":466,"mg_neto":4459636.0,"cantidad":668.0,"mg_pct":0.3964},{"Familia":"Mochila","venta_neta":7827522.0,"pedidos":232,"mg_neto":2344894.0,"cantidad":239.0,"mg_pct":0.2996},{"Familia":"Plantas","venta_neta":220956185.0,"pedidos":3709,"mg_neto":92719759.0,"cantidad":5533.0,"mg_pct":0.4196},{"Familia":"Ropa","venta_neta":618671.0,"pedidos":76,"mg_neto":188088.0,"cantidad":102.0,"mg_pct":0.304},{"Familia":"Varios","venta_neta":2374606.0,"pedidos":92,"mg_neto":452020.0,"cantidad":291.0,"mg_pct":0.1904},{"Familia":"Vasos","venta_neta":5074770.0,"pedidos":375,"mg_neto":-87998.0,"cantidad":1014.0,"mg_pct":-0.0173},{"Familia":"Aspiradora","venta_neta":5349729.0,"pedidos":197,"mg_neto":1704173.0,"cantidad":211.0,"mg_pct":0.3186}],"productos":[{"Codigo Prod":"DPCF3K101","Descripción":"Dispensador Gris Pedestal Compresor 3 llaves","Familia":"Dispensador","venta_neta":65020433.0,"cantidad":623.0,"mg_neto":14808699.0,"costo":37973307.0,"pedidos":602,"mg_pct":0.2278,"Canal Padre":"Falabella"},{"Codigo Prod":"DPEF3K101","Descripción":"Dispensador Gris Pedestal Eléctrico 3 llaves","Familia":"Dispensador","venta_neta":45092588.0,"cantidad":611.0,"mg_neto":9861271.0,"costo":27396892.0,"pedidos":505,"mg_pct":0.2187,"Canal Padre":"Falabella"},{"Codigo Prod":"FICU110","Descripción":"Ficus Premium 120 cm / 630 Hojas","Familia":"Plantas","venta_neta":29480259.0,"cantidad":817.0,"mg_neto":12133686.0,"costo":10025177.0,"pedidos":688,"mg_pct":0.4116,"Canal Padre":"Mercado Libre"},{"Codigo Prod":"FICU111","Descripción":"Ficus Premium 160 cm / 1008 Hojas","Familia":"Plantas","venta_neta":26519254.0,"cantidad":509.0,"mg_neto":13146231.0,"costo":7967871.0,"pedidos":396,"mg_pct":0.4957,"Canal Padre":"Falabella"},{"Codigo Prod":"FICU112","Descripción":"Ficus Premium 180 cm / 1260 Hojas","Familia":"Plantas","venta_neta":17420228.0,"cantidad":266.0,"mg_neto":8440193.0,"costo":5427534.0,"pedidos":215,"mg_pct":0.4845,"Canal Padre":"Mercado Libre"},{"Codigo Prod":"DPCF3K102","Descripción":"Dispensador Negro Pedestal Compresor 3 llaves","Familia":"Dispensador","venta_neta":16702519.0,"cantidad":157.0,"mg_neto":3655191.0,"costo":9492783.0,"pedidos":155,"mg_pct":0.2188,"Canal Padre":"Mercado Libre"},{"Codigo Prod":"FILY112","Descripción":"Ficus Lyrata 180 cm / 232 Hojas","Familia":"Plantas","venta_neta":15131165.0,"cantidad":222.0,"mg_neto":5905550.0,"costo":6388150.0,"pedidos":159,"mg_pct":0.3903,"Canal Padre":"Falabella"},{"Codigo Prod":"BANA112","Descripción":"Banano Premium 180 cm / 14 Hojas","Familia":"Plantas","venta_neta":14560395.0,"cantidad":195.0,"mg_neto":6086409.0,"costo":5600938.0,"pedidos":172,"mg_pct":0.418,"Canal Padre":"Falabella"},{"Codigo Prod":"TIBA101","Descripción":"Bañera Plegable Bebé + Malla + Termómetro","Familia":"Bebé","venta_neta":14459945.0,"cantidad":734.0,"mg_neto":2340271.0,"costo":7643830.0,"pedidos":726,"mg_pct":0.1618,"Canal Padre":"Falabella"},{"Codigo Prod":"SIMEBE101","Descripción":"Silla Mecedora Bebé Nido 3 en 1 Gris","Familia":"Bebé","venta_neta":14065762.0,"cantidad":248.0,"mg_neto":936564.0,"costo":9759236.0,"pedidos":254,"mg_pct":0.0666,"Canal Padre":"Mercado Libre"},{"Codigo Prod":"SIMEVI102","Descripción":"Silla Mecedora Bebé Nido Vibrador Celeste","Familia":"Bebé","venta_neta":12509099.0,"cantidad":408.0,"mg_neto":3214398.0,"costo":6135355.0,"pedidos":377,"mg_pct":0.257,"Canal Padre":"Falabella"},{"Codigo Prod":"PABI112","Descripción":"Ave del Paraíso 180 cm / 12 Hojas","Familia":"Plantas","venta_neta":11558468.0,"cantidad":167.0,"mg_neto":5137994.0,"costo":4668898.0,"pedidos":133,"mg_pct":0.4445,"Canal Padre":"Falabella"}],"regiones":[{"Región":"Metropolitana de Santiago","venta_neta":215957028.0,"pedidos":3772},{"Región":"Del Bíobío","venta_neta":25660716.0,"pedidos":526},{"Región":"De Valparaíso","venta_neta":24709236.0,"pedidos":501},{"Región":"Del Libertador B. O'Higgins","venta_neta":20675586.0,"pedidos":363},{"Región":"Del Maule","venta_neta":17534899.0,"pedidos":320},{"Región":"De Antofagasta","venta_neta":13926393.0,"pedidos":226},{"Región":"De La Araucanía","venta_neta":9887093.0,"pedidos":215},{"Región":"De Coquimbo","venta_neta":9780662.0,"pedidos":206},{"Región":"De Los Lagos","venta_neta":7559107.0,"pedidos":186},{"Región":"De Atacama","venta_neta":5505314.0,"pedidos":110}],"currier":[{"Currier2":"Bluexpress","pedidos":4529,"costo_envio":18384866.0,"venta_neta":219553731.0,"costo_pct":0.0837},{"Currier2":"Full","pedidos":2607,"costo_envio":13340747.0,"venta_neta":128831113.0,"costo_pct":0.1036},{"Currier2":"OTS","pedidos":1968,"costo_envio":7334416.0,"venta_neta":82363166.0,"costo_pct":0.089},{"Currier2":"Propio","pedidos":718,"costo_envio":120235.0,"venta_neta":39505063.0,"costo_pct":0.003},{"Currier2":"Starken","pedidos":446,"costo_envio":997524.0,"venta_neta":36812298.0,"costo_pct":0.0271},{"Currier2":"TVP","pedidos":96,"costo_envio":400811.0,"venta_neta":8324507.0,"costo_pct":0.0481}],"empresa":[{"Empresa":"( C )","venta_neta":6209995.0,"pedidos":255,"mg_neto":1809800.0,"mg_pct":0.2914},{"Empresa":"(A)","venta_neta":447977148.0,"pedidos":8774,"mg_neto":129046212.0,"mg_pct":0.2881},{"Empresa":"(B)","venta_neta":61290121.0,"pedidos":1337,"mg_neto":18356416.0,"mg_pct":0.2995}],"clientes":{"total":8845,"recurrentes":560}};
+
+// ── HELPERS ──
+const CLP = v => '$' + Math.round(v).toLocaleString('es-CL');
+const CLPm = v => { if(Math.abs(v)>=1e9) return '$'+(v/1e9).toFixed(1)+'B'; if(Math.abs(v)>=1e6) return '$'+(v/1e6).toFixed(1)+'M'; if(Math.abs(v)>=1e3) return '$'+(v/1e3).toFixed(0)+'K'; return CLP(v); };
+const PCT = v => (v*100).toFixed(1)+'%';
+const MES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const COLORS = ['#185FA5','#D85A30','#1D9E75','#BA7517','#D4537E','#639922','#534AB7','#888780','#0F6E56','#A32D2D'];
+
+let charts = {};
+let miniChart = null;
+
+// ── FILTER STATE ──
+const selEmp = document.getElementById('f-emp');
+// Multi-select dropdown helpers
+function toggleDD(ddId, btnId) {
+  // Close all others first
+  document.querySelectorAll('.multi-dd').forEach(d => {
+    if (d.id !== ddId) d.style.display = 'none';
+  });
+  const dd = document.getElementById(ddId);
+  dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.filter-group')) {
+    document.querySelectorAll('.multi-dd').forEach(d => d.style.display = 'none');
+  }
+});
+function onAllChange(prefix) {
+  const all = document.getElementById(prefix+'-all');
+  if (all.checked) document.querySelectorAll('.'+prefix+'-cb').forEach(c => c.checked = false);
+  updateLbl(prefix); render();
+}
+function onCbChange(prefix) {
+  const cbs = [...document.querySelectorAll('.'+prefix+'-cb')];
+  document.getElementById(prefix+'-all').checked = !cbs.some(c => c.checked);
+  updateLbl(prefix); render();
+}
+function updateLbl(prefix) {
+  const cbs = [...document.querySelectorAll('.'+prefix+'-cb')].filter(c => c.checked);
+  const lblEl = document.getElementById(prefix+'-lbl');
+  const defaults = {mes:'Todos', canal:'Todos', fam:'Todas'};
+  if (!cbs.length) lblEl.textContent = defaults[prefix];
+  else if (cbs.length === 1) lblEl.textContent = cbs[0].parentElement.textContent.trim();
+  else lblEl.textContent = cbs.length + ' seleccionados';
+}
+function getMultiVals(prefix) {
+  const cbs = [...document.querySelectorAll('.'+prefix+'-cb')].filter(c => c.checked);
+  return cbs.length ? cbs.map(c => c.value) : null; // null = todos
+}
+
+// ── MULTI-YEAR DROPDOWN ──
+function toggleYearDropdown(){
+  const dd = document.getElementById('year-dropdown');
+  dd.style.display = dd.style.display==='none'?'block':'none';
+}
+document.addEventListener('click', e=>{
+  const btn = document.getElementById('year-dropdown-btn');
+  const dd = document.getElementById('year-dropdown');
+  if(!btn.contains(e.target) && !dd.contains(e.target)) dd.style.display='none';
+});
+function getSelectedYears(){
+  const all = document.getElementById('yr-all');
+  if(all.checked) return null; // null = todos
+  const cbs = [...document.querySelectorAll('.yr-cb')].filter(c=>c.checked);
+  return cbs.length ? cbs.map(c=>+c.value) : null;
+}
+function updateYearBtnLabel(){
+  const years = getSelectedYears();
+  const lbl = document.getElementById('year-btn-label');
+  if(!years) lbl.textContent='Todos';
+  else if(years.length===1) lbl.textContent=years[0];
+  else lbl.textContent=years.join(', ');
+}
+function onYearAllChange(cb){
+  if(cb.checked) document.querySelectorAll('.yr-cb').forEach(c=>c.checked=false);
+  updateYearBtnLabel();
+  render();
+}
+function onYearCbChange(){
+  const cbs = [...document.querySelectorAll('.yr-cb')];
+  const anyChecked = cbs.some(c=>c.checked);
+  document.getElementById('yr-all').checked = !anyChecked;
+  updateYearBtnLabel();
+  render();
+}
+
+// populate canal/fam selects
+const canales = [...new Set(RAW.canales.map(d=>d['Canal Padre']))].sort();
+const canalOpts = document.getElementById('canal-options');
+canales.forEach(c=>{
+  const lbl=document.createElement('label');
+  lbl.innerHTML=`<input type="checkbox" class="canal-cb" value="${c}" onchange="onCbChange('canal')"> ${c}`;
+  canalOpts.appendChild(lbl);
+});
+const fams = [...new Set(RAW.familias.map(d=>d.Familia))].filter(f=>f&&f!='0').sort();
+const famOpts = document.getElementById('fam-options');
+fams.forEach(f=>{
+  const lbl=document.createElement('label');
+  lbl.innerHTML=`<input type="checkbox" class="fam-cb" value="${f}" onchange="onCbChange('fam')"> ${f}`;
+  famOpts.appendChild(lbl);
+});
+
+document.getElementById('f-emp').addEventListener('change', render);
+
+// ── MAIN RENDER ──
+function render(){
+  const emp = document.getElementById('f-emp').value;
+  const meses = getMultiVals('mes');   // null=todos, array de strings
+  const canales_sel = getMultiVals('canal'); // null=todos, array de strings
+  const fams_sel = getMultiVals('fam');      // null=todos, array de strings
+  const mes = meses ? (meses.length===1 ? +meses[0] : null) : null; // para compatibilidad
+  const selectedYears = getSelectedYears(); // null = todos, array = específicos
+
+  // Para KPIs y otras métricas, año único = primer seleccionado (o null)
+  const año = selectedYears ? selectedYears[0] : null;
+
+  // filter monthly — si hay múltiples años seleccionados, incluimos todos
+  let monthly = RAW.monthly.filter(d=>
+    (!emp||d.Empresa===emp) &&
+    (!selectedYears||selectedYears.includes(d.Año)) &&
+    (!meses||meses.map(Number).includes(d.Mes))
+  );
+
+  const totVenta = monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const totMg = monthly.reduce((s,d)=>s+d.mg_neto,0);
+  const totOrd = monthly.reduce((s,d)=>s+d.pedidos,0);
+  const mgPct = totVenta>0 ? totMg/totVenta : 0;
+
+  // YoY: compare same period prior year (usa primer año seleccionado)
+  let yoy = null;
+  if(año){
+    const prev = RAW.monthly.filter(d=>(!emp||d.Empresa===emp)&&d.Año===año-1&&(!mes||d.Mes===mes));
+    const prevV = prev.reduce((s,d)=>s+d.venta_neta,0);
+    if(prevV>0) yoy = (totVenta-prevV)/prevV;
+  }
+
+  // KPIs
+  document.getElementById('kv-venta').textContent = CLPm(totVenta);
+  const yoyEl = document.getElementById('kv-yoy-val');
+  if(yoy!==null){
+    yoyEl.textContent = (yoy>=0?'+':'')+PCT(yoy);
+    yoyEl.style.color = yoy>=0?'#3B6D11':'#A32D2D';
+    document.getElementById('kv-yoy-sub').textContent = 'vs. año '+(año-1);
+  } else {
+    yoyEl.textContent = '—';
+    yoyEl.style.color='#6B7280';
+    document.getElementById('kv-yoy-sub').textContent = 'selecciona un año para ver YoY';
+  }
+  document.getElementById('kv-mg').textContent = PCT(mgPct);
+  document.getElementById('kv-ticket').textContent = totOrd>0?CLPm(totVenta/totOrd):'—';
+  document.getElementById('kv-pedidos').textContent = totOrd.toLocaleString('es-CL')+' pedidos';
+  document.getElementById('kv-ord').textContent = totOrd.toLocaleString('es-CL');
+  document.getElementById('kv-uds').textContent = Math.round(monthly.reduce((s,d)=>s+d.cantidad,0)).toLocaleString('es-CL')+' unidades';
+
+  // timestamp label
+  const parts = [];
+  if(emp) parts.push('Empresa '+emp); else parts.push('Todas las empresas');
+  if(selectedYears) parts.push(selectedYears.join('/')); else parts.push('Todos los períodos');
+  if(meses) parts.push(meses.map(m=>MES[+m]).join('+')); else parts.push('Todos los meses');
+  if(canales_sel) parts.push(canales_sel.length===1?canales_sel[0]:canales_sel.length+' canales'); else parts.push('Todos los canales');
+  if(fams_sel) parts.push(fams_sel.length===1?fams_sel[0]:fams_sel.length+' familias'); else parts.push('Todas las familias');
+  document.getElementById('ts-label').textContent = parts.join(' · ');
+
+  // Pre-calcular datos filtrados para pasar a todos los renders
+  const filteredCM = RAW.canal_monthly.filter(d=>
+    (!selectedYears || selectedYears.includes(d.Año)) &&
+    (!meses || meses.map(Number).includes(d.Mes)) &&
+    (!canales_sel || canales_sel.includes(d['Canal Padre']))
+  );
+  const filteredProds = RAW.productos.filter(d=>
+    (!canales_sel || canales_sel.includes(d['Canal Padre'])) &&
+    (!fams_sel    || fams_sel.includes(d.Familia))
+  );
+
+  renderLine(emp, selectedYears, meses);
+  renderCanal(filteredCM, null);
+  renderFamilias(filteredProds, null, monthly);
+  renderProductos(filteredProds, monthly);
+  renderDonut(filteredCM, null);
+  renderStack(filteredCM, selectedYears, meses);
+  renderRegiones(monthly);
+  renderCurrier(monthly);
+  renderEmpresas(monthly);
+}
+
+// ── BAR CHART EVOLUCIÓN MULTI-AÑO ──
+const YEAR_COLORS = ['#185FA5','#D85A30','#1D9E75','#BA7517'];
+function renderLine(emp, selectedYears, meses){
+  // Determinar qué años mostrar
+  const allAvailYears = [...new Set(RAW.monthly.map(d=>d.Año))].sort();
+  const yearsToShow = selectedYears ? selectedYears.slice().sort() : allAvailYears;
+
+  const allMonths = meses ? meses.map(Number).sort((a,b)=>a-b) : [1,2,3,4,5,6,7,8,9,10,11,12];
+  const labels = allMonths.map(m=>MES[m]);
+
+  // Actualizar subtítulo
+  const subtitle = document.getElementById('line-subtitle');
+  if(subtitle) subtitle.textContent = yearsToShow.length>1 ? yearsToShow.join(' vs ') : String(yearsToShow[0]||'Todos los años');
+
+  const datasets = yearsToShow.map((yr,i)=>({
+    label: String(yr),
+    data: allMonths.map(m=>{
+      const rows = RAW.monthly.filter(d=>d.Año===yr&&d.Mes===m&&(!emp||d.Empresa===emp));
+      const v = rows.reduce((s,d)=>s+d.venta_neta,0);
+      return v||null;
+    }),
+    backgroundColor: YEAR_COLORS[i % YEAR_COLORS.length],
+    borderRadius: 4,
+    borderSkipped: false
+  }));
+
+  if(charts.line){ charts.line.destroy(); }
+  charts.line = new Chart(document.getElementById('ch-line'),{
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ labels:{ font:{size:11}, boxWidth:12 } },
+        tooltip:{ callbacks:{ label:c=>c.dataset.label+': '+CLPm(c.raw||0) } }
+      },
+      scales:{
+        y:{ ticks:{ callback:v=>CLPm(v), font:{size:10} }, grid:{ color:'#F3F4F6' } },
+        x:{ ticks:{ font:{size:10} }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ── CANAL BAR — desde canal_monthly filtrado ──
+function renderCanal(filteredCM, filterCanal){
+  const map = {};
+  filteredCM.forEach(d=>{
+    if(filterCanal && d['Canal Padre']!==filterCanal) return;
+    const k = d['Canal Padre'];
+    if(!map[k]) map[k]={venta_neta:0};
+    map[k].venta_neta += d.venta_neta;
+  });
+  const data = Object.entries(map).map(([k,v])=>{
+    const raw = RAW.canales.find(c=>c['Canal Padre']===k)||{};
+    return {...raw, 'Canal Padre':k, venta_neta:v.venta_neta};
+  }).sort((a,b)=>b.venta_neta-a.venta_neta).slice(0,10);
+
+  const totalVenta = data.reduce((s,d)=>s+d.venta_neta,0);
+  // Etiquetas con % de participación incluido
+  const labels = data.map(d=>{
+    const pct = totalVenta>0 ? (d.venta_neta/totalVenta*100).toFixed(1) : '0.0';
+    return `${d['Canal Padre']}  ${pct}%`;
+  });
+
+  if(charts.canal){ charts.canal.destroy(); }
+  charts.canal = new Chart(document.getElementById('ch-canal'),{
+    type:'bar', data:{labels, datasets:[{data:data.map(d=>d.venta_neta), backgroundColor:COLORS, borderRadius:4, borderSkipped:false}]},
+    options:{responsive:true, maintainAspectRatio:true, indexAxis:'y',
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        title: items => data[items[0].dataIndex]['Canal Padre'],
+        label: c => ` ${CLPm(c.raw)}  (${totalVenta>0?(c.raw/totalVenta*100).toFixed(1):0}%)`
+      }}},
+      onClick:(e,els)=>{ if(els.length){ openPanel(data[els[0].index]); } },
+      scales:{
+        x:{ticks:{callback:v=>CLPm(v),font:{size:10}},grid:{color:'#F3F4F6'}},
+        y:{ticks:{font:{size:10},color:'#374151'},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ── FAMILIAS HBARS — escala con monthly filtrado ──
+function renderFamilias(filteredProds, filterFam, monthly){
+  // Calcular ratio de escala basado en venta filtrada vs total
+  const totFiltrado = monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const totRaw = RAW.monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const ratio = totRaw>0 ? totFiltrado/totRaw : 1;
+
+  // Usar RAW.familias escalado (mg_pct es relativo, no cambia con escala)
+  let sorted = RAW.familias
+    .filter(d=>d.Familia&&d.Familia!='0'&&(!filterFam||d.Familia===filterFam))
+    .filter((d,i,a)=>a.findIndex(x=>x.Familia===d.Familia)===i)
+    .map(d=>({...d, venta_neta: d.venta_neta*ratio, mg_neto: d.mg_neto*ratio}))
+    .sort((a,b)=>b.mg_pct-a.mg_pct);
+
+  if(!sorted.length){ document.getElementById('fam-bars').innerHTML='<div style="color:#9CA3AF;font-size:12px;padding:12px 0">Sin datos</div>'; return; }
+  const maxMg = Math.max(...sorted.map(d=>Math.abs(d.mg_pct)));
+  document.getElementById('fam-bars').innerHTML = sorted.map(d=>{
+    const pct = d.mg_pct*100;
+    const col = pct>=45?'#3B6D11':pct>=30?'#854F0B':'#A32D2D';
+    const w = maxMg>0?Math.abs(d.mg_pct)/maxMg*100:0;
+    return `<div class="hbar-row">
+      <div class="hbar-label"><span>${d.Familia}</span><span style="font-weight:600;color:${col}">${pct.toFixed(1)}%</span></div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${w}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── PRODUCTOS TABLE — escala con monthly filtrado ──
+function renderProductos(filteredProds, monthly){
+  const totFiltrado = monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const totRaw = RAW.monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const ratio = totRaw>0 ? totFiltrado/totRaw : 1;
+
+  const top = filteredProds
+    .map(p=>({...p, venta_neta: p.venta_neta*ratio, mg_neto: p.mg_neto*ratio, cantidad: p.cantidad*ratio}))
+    .sort((a,b)=>b.venta_neta-a.venta_neta).slice(0,12);
+
+  const tbody = document.getElementById('prod-tbody');
+  tbody.innerHTML = top.map(p=>{
+    const mg = p.mg_pct*100;
+    const badge = mg>=35?'mg-green':mg>=25?'mg-amber':'mg-red';
+    const desc = p.Descripción.length>35?p.Descripción.slice(0,33)+'…':p.Descripción;
+    return `<tr>
+      <td title="${p.Descripción}">${desc}</td>
+      <td>${p.Familia}</td>
+      <td>${Math.round(p.cantidad).toLocaleString('es-CL')}</td>
+      <td>${CLPm(p.venta_neta)}</td>
+      <td>${CLPm(p.mg_neto)}</td>
+      <td><span class="mg-badge ${badge}">${mg.toFixed(1)}%</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="color:#9CA3AF;text-align:center;padding:16px">Sin datos</td></tr>';
+}
+
+// ── DONUT — respeta todos los filtros via filteredCM ──
+function renderDonut(filteredCM, filterCanal){
+  const map = {};
+  filteredCM.forEach(d=>{
+    if(filterCanal && d['Canal Padre']!==filterCanal) return;
+    const k = d['Canal Padre'];
+    map[k] = (map[k]||0) + d.venta_neta;
+  });
+  const data = Object.entries(map).map(([k,v])=>({canal:k,venta_neta:v}))
+    .sort((a,b)=>b.venta_neta-a.venta_neta).slice(0,8);
+  const total = data.reduce((s,d)=>s+d.venta_neta,0);
+  if(charts.donut){ charts.donut.destroy(); }
+  if(!data.length){ return; }
+
+  const outerLabelsPlugin = {
+    id: 'outerLabels',
+    afterDraw(chart) {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      const ds = chart.data.datasets[0];
+      const tot = ds.data.reduce((s,v)=>s+v,0);
+      ctx.save();
+      ctx.font = 'bold 10px system-ui,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      meta.data.forEach((arc, i) => {
+        const pct = tot > 0 ? ds.data[i] / tot * 100 : 0;
+        if(pct < 3) return;
+        const angle = (arc.startAngle + arc.endAngle) / 2;
+        const outerR = arc.outerRadius + 18;
+        const x = arc.x + Math.cos(angle) * outerR;
+        const y = arc.y + Math.sin(angle) * outerR;
+        ctx.fillStyle = '#374151';
+        ctx.fillText(pct.toFixed(1) + '%', x, y);
+      });
+      ctx.restore();
+    }
+  };
+
+  charts.donut = new Chart(document.getElementById('ch-donut'),{
+    type:'doughnut',
+    data:{ labels:data.map(d=>d.canal), datasets:[{ data:data.map(d=>d.venta_neta), backgroundColor:COLORS, borderWidth:2, borderColor:'#fff' }] },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      layout:{ padding:{ top:22, bottom:22, left:22, right:22 } },
+      plugins:{
+        legend:{ position:'right', labels:{ font:{size:10}, boxWidth:10, padding:8 } },
+        tooltip:{ callbacks:{ label:c=>c.label+': '+CLPm(c.raw)+' ('+PCT(total>0?c.raw/total:0)+')' } }
+      }
+    },
+    plugins:[ outerLabelsPlugin ]
+  });
+}
+
+// ── STACKED — desde canal_monthly filtrado, todos los años seleccionados ──
+function renderStack(filteredCM, selectedYears, filtMeses){
+  // ── Margen neto % por canal (horizontal bars) ──
+  // Aggregate venta and mg from filteredCM using RAW.canales for mg_neto
+  const map = {};
+  filteredCM.forEach(d => {
+    const k = d['Canal Padre'];
+    if (!map[k]) map[k] = { venta: 0 };
+    map[k].venta += d.venta_neta;
+  });
+  // Get mg_neto proportionally from RAW.canales
+  const totRawVenta = RAW.canales.reduce((s,c) => s + c.venta_neta, 0);
+  const totFiltVenta = Object.values(map).reduce((s,v) => s + v.venta, 0);
+  const ratio = totRawVenta > 0 ? totFiltVenta / totRawVenta : 1;
+
+  const entries = Object.entries(map).map(([canal, v]) => {
+    const raw = RAW.canales.find(c => c['Canal Padre'] === canal) || {};
+    const mg_neto = (raw.mg_neto || 0) * ratio;
+    const mg_pct = v.venta > 0 ? mg_neto / v.venta * 100 : (raw.mg_pct || 0) * 100;
+    return { canal, venta: v.venta, mg_pct };
+  }).sort((a,b) => b.mg_pct - a.mg_pct);
+
+  const labels = entries.map(e => e.canal);
+  const values = entries.map(e => +e.mg_pct.toFixed(1));
+  const bgColors = values.map(v => v >= 35 ? '#3B6D11' : v >= 25 ? '#854F0B' : '#A32D2D');
+  const bgAlpha  = values.map(v => v >= 35 ? '#EAF3DE' : v >= 25 ? '#FAEEDA' : '#FCEBEB');
+
+  if(charts.stack){ charts.stack.destroy(); }
+  charts.stack = new Chart(document.getElementById('ch-stack'),{
+    type:'bar',
+    data:{ labels, datasets:[{
+      data: values,
+      backgroundColor: bgColors,
+      borderRadius: 4,
+      borderSkipped: false
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:true, indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{
+          label: c => ` Mg Neto: ${c.raw.toFixed(1)}%`
+        }}
+      },
+      scales:{
+        x:{
+          ticks:{callback:v=>v+'%', font:{size:10}},
+          grid:{color:'#F3F4F6'},
+          min: 0
+        },
+        y:{ticks:{font:{size:10}}, grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ── REGIONES — usa monthly filtrado ──
+function renderRegiones(monthly){
+  // agregar por región desde monthly (que sí tiene filtros de empresa/año/mes aplicados)
+  // como monthly no tiene región, usamos RAW.regiones como fallback pero escalado por la proporción filtrada
+  // Para mostrar regiones reales con filtros, usamos RAW.regiones pero multiplicadas por el ratio de venta filtrada
+  const totFiltrado = monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const totRaw = RAW.monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const ratio = totRaw>0 ? totFiltrado/totRaw : 1;
+  const regionData = RAW.regiones.map(d=>({...d, venta_neta: d.venta_neta*ratio}))
+    .filter(d=>d.venta_neta>0).sort((a,b)=>b.venta_neta-a.venta_neta).slice(0,10);
+  if(!regionData.length){ document.getElementById('reg-bars').innerHTML='<div style="color:#9CA3AF;font-size:12px;padding:12px">Sin datos</div>'; return; }
+  const max = regionData[0].venta_neta;
+  const total = regionData.reduce((s,d)=>s+d.venta_neta,0);
+  document.getElementById('reg-bars').innerHTML = regionData.map(d=>{
+    const label = d.Región.replace('Metropolitana de Santiago','R. Metropolitana').replace('Del Libertador B. O\'Higgins','O\'Higgins');
+    const pct = d.venta_neta/total*100;
+    return `<div class="hbar-row">
+      <div class="hbar-label"><span>${label}</span><span style="font-weight:600;color:#185FA5">${CLPm(d.venta_neta)} <span style="color:#9CA3AF;font-weight:400">${pct.toFixed(1)}%</span></span></div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${d.venta_neta/max*100}%;background:#185FA5"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── CURRIER — escala con el monthly filtrado ──
+function renderCurrier(monthly){
+  const totFiltrado = monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const totRaw = RAW.monthly.reduce((s,d)=>s+d.venta_neta,0);
+  const ratio = totRaw>0 ? totFiltrado/totRaw : 1;
+  const data = RAW.currier.map(d=>({...d, pedidos:Math.round(d.pedidos*ratio), costo_envio:d.costo_envio*ratio, venta_neta:d.venta_neta*ratio}));
+  if(charts.currier){ charts.currier.destroy(); }
+  charts.currier = new Chart(document.getElementById('ch-currier'),{
+    type:'bar', data:{
+      labels:data.map(d=>d.Currier2),
+      datasets:[
+        {label:'Pedidos',data:data.map(d=>d.pedidos),backgroundColor:'#185FA5',borderRadius:3,yAxisID:'y'},
+        {label:'Costo envío %',data:data.map(d=>+(d.costo_pct*100).toFixed(1)),backgroundColor:'#D85A30',borderRadius:3,yAxisID:'y2'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:10}},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        y:{position:'left',ticks:{font:{size:10}},grid:{color:'#F3F4F6'}},
+        y2:{position:'right',ticks:{callback:v=>v+'%',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+
+  document.getElementById('currier-table').innerHTML = `
+    <table><thead><tr><th>Currier</th><th>Pedidos</th><th>Costo envío</th><th>% s/venta</th></tr></thead>
+    <tbody>${data.map(d=>`<tr>
+      <td>${d.Currier2}</td>
+      <td>${d.pedidos.toLocaleString('es-CL')}</td>
+      <td>${CLPm(d.costo_envio)}</td>
+      <td><span class="mg-badge ${d.costo_pct<0.05?'mg-green':d.costo_pct<0.09?'mg-amber':'mg-red'}">${PCT(d.costo_pct)}</span></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ── EMPRESAS — desde monthly filtrado ──
+function renderEmpresas(monthly){
+  const map = {};
+  monthly.forEach(d=>{
+    const k = d.Empresa;
+    if(!map[k]) map[k]={Empresa:k,venta_neta:0,pedidos:0,mg_neto:0,cantidad:0};
+    map[k].venta_neta += d.venta_neta;
+    map[k].pedidos    += d.pedidos;
+    map[k].mg_neto    += d.mg_neto;
+    map[k].cantidad   += d.cantidad;
+  });
+  const empresas = Object.values(map);
+  const total = empresas.reduce((s,e)=>s+e.venta_neta,0);
+  if(!empresas.length){
+    document.getElementById('emp-cards').innerHTML='<div style="color:#9CA3AF;font-size:12px;padding:12px">Sin datos para la selección</div>';
+    return;
+  }
+  document.getElementById('emp-cards').innerHTML = empresas.sort((a,b)=>b.venta_neta-a.venta_neta).map(e=>{
+    const mgPct = e.venta_neta>0?e.mg_neto/e.venta_neta:0;
+    const pctTotal = total>0?e.venta_neta/total:0;
+    return `<div class="card">
+      <div class="card-title">Empresa ${e.Empresa}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div><div style="font-size:10px;color:#9CA3AF">Venta neta</div><div style="font-size:18px;font-weight:700">${CLPm(e.venta_neta)}</div></div>
+        <div><div style="font-size:10px;color:#9CA3AF">% del total</div><div style="font-size:18px;font-weight:700">${PCT(pctTotal)}</div></div>
+        <div><div style="font-size:10px;color:#9CA3AF">Pedidos</div><div style="font-size:16px;font-weight:600">${e.pedidos.toLocaleString('es-CL')}</div></div>
+        <div><div style="font-size:10px;color:#9CA3AF">Margen neto</div>
+          <div style="font-size:16px;font-weight:600;color:${mgPct>=0.35?'#3B6D11':mgPct>=0.25?'#854F0B':'#A32D2D'}">${PCT(mgPct)}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;height:6px;background:#F3F4F6;border-radius:99px"><div style="height:100%;border-radius:99px;background:#185FA5;width:${PCT(pctTotal)}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── PANEL LATERAL ──
+function openPanel(canal){
+  const d = canal;
+  document.getElementById('p-title').textContent = d['Canal Padre'];
+  document.getElementById('p-sub').textContent = 'Detalle del canal';
+  document.getElementById('p-stats').innerHTML = [
+    ['Venta neta', CLPm(d.venta_neta)],
+    ['Margen neto', PCT(d.mg_pct)],
+    ['Ticket promedio', CLP(d.ticket)],
+    ['Nº pedidos', d.pedidos.toLocaleString('es-CL')],
+    ['Comisión promedio', PCT(d.com_pct)],
+    ['Costo envío', CLPm(d.costo_envio)]
+  ].map(([l,v])=>`<div class="stat-row"><span class="stat-label">${l}</span><span class="stat-val">${v}</span></div>`).join('');
+
+  // mini evolution chart
+  const cName = d['Canal Padre'];
+  const months2025 = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const vals = months2025.map(m=>{ const r=RAW.canal_monthly.find(x=>x.Año===2025&&x.Mes===m&&x['Canal Padre']===cName); return r?r.venta_neta:null; });
+  if(miniChart){ miniChart.destroy(); }
+  miniChart = new Chart(document.getElementById('p-minichart'),{
+    type:'line', data:{labels:MES.slice(1),datasets:[{data:vals,borderColor:'#185FA5',tension:.4,fill:false,pointRadius:2}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>CLPm(c.raw||0)}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{callback:v=>CLPm(v),font:{size:9}},grid:{color:'#F3F4F6'}}}}
+  });
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════════════
+// ── CONFIGURACIÓN API GOOGLE APPS SCRIPT ──
+// ══════════════════════════════════════════════════════════
+// Pega aquí tu URL y token después de configurar el Apps Script.
+// Mientras no estén configurados, el dashboard usa los datos del archivo.
+const API_URL   = 'https://script.google.com/macros/s/AKfycbyLDbxBplF3q8Kv_gFUVh5VFS5xDpR0hdW6g5rsJMmfKpLnXTbfRdtkN3T64gXgqLTD/exec';  // ← pega aquí: https://script.google.com/macros/s/XXXXX/exec
+const API_TOKEN = 'dashboard2026clave';  // ← pega aquí tu token secreto
+
+// ── CONSTRUIR RAW DESDE FILAS CRUDAS DEL EXCEL ──
+// El Apps Script devuelve todas las filas de "Detalle Ventas".
+// Esta función las agrega igual que el script Python original.
+function buildRAWFromRows(rows) {
+  // Filtrar filas válidas
+  const valid = rows.filter(r => r['Año'] && r['Venta neta'] > 0 &&
+    [2023,2024,2025,2026].includes(+r['Año']));
+
+  // ── monthly: por Empresa × Año × Mes ──
+  const mMap = {};
+  valid.forEach(r => {
+    const k = `${r['Empresa']}|${r['Año']}|${r['Mes']}`;
+    if (!mMap[k]) mMap[k] = { Empresa:r['Empresa'], Año:+r['Año'], Mes:+r['Mes'],
+      venta_neta:0, pedidos:0, mg_neto:0, cantidad:0 };
+    mMap[k].venta_neta += +r['Venta neta']  || 0;
+    mMap[k].mg_neto    += +r['Mg Neto']     || 0;
+    mMap[k].cantidad   += +r['Cantidad']    || 0;
+    mMap[k].pedidos    += 1;
+  });
+
+  // ── canal_monthly: por Año × Mes × Canal Padre ──
+  const cmMap = {};
+  valid.forEach(r => {
+    const canal = r['Canal Padre'] || 'N/A';
+    const k = `${r['Año']}|${r['Mes']}|${canal}`;
+    if (!cmMap[k]) cmMap[k] = { Año:+r['Año'], Mes:+r['Mes'], 'Canal Padre':canal, venta_neta:0 };
+    cmMap[k].venta_neta += +r['Venta neta'] || 0;
+  });
+
+  // ── canales: totales por Canal Padre ──
+  const cMap = {};
+  valid.forEach(r => {
+    const canal = r['Canal Padre'] || 'N/A';
+    if (!cMap[canal]) cMap[canal] = { 'Canal Padre':canal, venta_neta:0, pedidos:0,
+      mg_neto:0, comision:0, costo_envio:0, ticket_sum:0 };
+    cMap[canal].venta_neta  += +r['Venta neta']       || 0;
+    cMap[canal].mg_neto     += +r['Mg Neto']           || 0;
+    cMap[canal].comision    += +r['Comisión MP Neto']  || 0;
+    cMap[canal].costo_envio += +r['Costo Envio Neto']  || 0;
+    cMap[canal].pedidos     += 1;
+  });
+  Object.values(cMap).forEach(c => {
+    c.mg_pct   = c.venta_neta > 0 ? c.mg_neto / c.venta_neta : 0;
+    c.com_pct  = c.venta_neta > 0 ? c.comision / c.venta_neta : 0;
+    c.ticket   = c.pedidos > 0 ? Math.round(c.venta_neta / c.pedidos) : 0;
+  });
+
+  // ── familias: totales por Familia ──
+  const fMap = {};
+  valid.forEach(r => {
+    const fam = r['Familia'] || 'N/A';
+    if (!fam || fam === '0') return;
+    if (!fMap[fam]) fMap[fam] = { Familia:fam, venta_neta:0, pedidos:0, mg_neto:0, cantidad:0 };
+    fMap[fam].venta_neta += +r['Venta neta'] || 0;
+    fMap[fam].mg_neto    += +r['Mg Neto']    || 0;
+    fMap[fam].cantidad   += +r['Cantidad']   || 0;
+    fMap[fam].pedidos    += 1;
+  });
+  Object.values(fMap).forEach(f => {
+    f.mg_pct = f.venta_neta > 0 ? f.mg_neto / f.venta_neta : 0;
+  });
+
+  // ── productos: top por Código ──
+  const pMap = {};
+  valid.forEach(r => {
+    const cod = r['Codigo Prod'];
+    if (!cod) return;
+    if (!pMap[cod]) pMap[cod] = {
+      'Codigo Prod':cod, 'Descripción':r['Descripción']||'',
+      Familia:r['Familia']||'', 'Canal Padre':r['Canal Padre']||'',
+      venta_neta:0, mg_neto:0, costo:0, cantidad:0, pedidos:0
+    };
+    pMap[cod].venta_neta += +r['Venta neta']      || 0;
+    pMap[cod].mg_neto    += +r['Mg Neto']          || 0;
+    pMap[cod].costo      += +r['Costo Neto Venta'] || 0;
+    pMap[cod].cantidad   += +r['Cantidad']         || 0;
+    pMap[cod].pedidos    += 1;
+  });
+  Object.values(pMap).forEach(p => {
+    p.mg_pct = p.venta_neta > 0 ? p.mg_neto / p.venta_neta : 0;
+  });
+
+  // ── Actualizar RAW global ──
+  RAW.monthly      = Object.values(mMap);
+  RAW.canal_monthly= Object.values(cmMap);
+  RAW.canales      = Object.values(cMap).sort((a,b) => b.venta_neta - a.venta_neta);
+  RAW.familias     = Object.values(fMap);
+  RAW.productos    = Object.values(pMap).sort((a,b) => b.venta_neta - a.venta_neta);
+  // regiones y currier permanecen del snapshot (no están en filas individuales sin geocoding)
+
+  // Repoblar selects de canal y familia con nuevos valores
+  // Repopulate canal and fam checkboxes
+  const cOpts = document.getElementById('canal-options');
+  const fOpts2 = document.getElementById('fam-options');
+  if (cOpts) {
+    cOpts.innerHTML = '';
+    [...new Set(RAW.canales.map(d => d['Canal Padre']))].sort().forEach(c => {
+      const lbl = document.createElement('label');
+      lbl.innerHTML = `<input type="checkbox" class="canal-cb" value="${c}" onchange="onCbChange('canal')"> ${c}`;
+      cOpts.appendChild(lbl);
+    });
+    document.getElementById('canal-all').checked = true;
+    updateLbl('canal');
+  }
+  if (fOpts2) {
+    fOpts2.innerHTML = '';
+    [...new Set(RAW.familias.map(d => d.Familia))].filter(f => f && f !== '0').sort().forEach(f => {
+      const lbl = document.createElement('label');
+      lbl.innerHTML = `<input type="checkbox" class="fam-cb" value="${f}" onchange="onCbChange('fam')"> ${f}`;
+      fOpts2.appendChild(lbl);
+    });
+    document.getElementById('fam-all').checked = true;
+    updateLbl('fam');
+  }
+}
+
+// ── CARGA DESDE API ──
+async function loadFromAPI() {
+  const overlay = document.getElementById('loading-overlay');
+  const msg     = document.getElementById('loading-msg');
+  const sub     = document.getElementById('loading-sub');
+  overlay.style.display = 'flex';
+
+  try {
+    msg.textContent = 'Conectando con Google Sheets…';
+    sub.textContent = 'Esto puede tardar 3–5 segundos la primera vez';
+
+    const url = `${API_URL}?token=${encodeURIComponent(API_TOKEN)}&t=${Date.now()}`;
+    const res  = await fetch(url, { method:'GET', mode:'cors' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Respuesta inválida de la API');
+
+    msg.textContent = `Procesando ${json.rows.length.toLocaleString('es-CL')} registros…`;
+    await new Promise(r => setTimeout(r, 50)); // allow repaint
+
+    buildRAWFromRows(json.rows);
+    document.getElementById('data-date').textContent =
+      `Datos al ${json.cutoff || 'hoy'} · En vivo ✓`;
+    document.getElementById('api-banner').style.display = 'none';
+
+  } catch(err) {
+    console.warn('API no disponible, usando datos del archivo:', err.message);
+    document.getElementById('api-banner').style.display = 'flex';
+    document.getElementById('data-date').textContent += ' · Offline';
+  } finally {
+    overlay.style.display = 'none';
+  }
+}
+
+// ── INIT ──
+// Calcular fecha = día anterior al último mes/año con datos reales
+(function(){
+  // Encontrar el registro más reciente con venta real (>1000 para excluir placeholders)
+  const real = RAW.monthly.filter(d=>d.venta_neta>1000);
+  if(!real.length) return;
+  real.sort((a,b)=> b.Año!==a.Año ? b.Año-a.Año : b.Mes-a.Mes);
+  const last = real[0];
+  // Construir fecha: día 1 del mes+1 del último registro, restar 1 día = ayer del período
+  // Pero como los datos son mensuales sin día exacto, usamos: día anterior al día de hoy
+  // dentro del mismo mes/año del último registro — ó si el mes ya pasó, último día del mes
+  const today = new Date();
+  let refDate;
+  if(last.Año === today.getFullYear() && last.Mes === today.getMonth()+1) {
+    // Mes en curso: usar ayer
+    refDate = new Date(today);
+    refDate.setDate(refDate.getDate() - 1);
+  } else {
+    // Mes anterior o más: usar último día de ese mes
+    refDate = new Date(last.Año, last.Mes, 0);
+  }
+  const dd = String(refDate.getDate()).padStart(2,'0');
+  const mm = String(refDate.getMonth()+1).padStart(2,'0');
+  const yyyy = refDate.getFullYear();
+  document.getElementById('data-date').textContent = `Datos al ${dd}-${mm}-${yyyy}`;
+})();
+
+// Si hay API configurada, cargar datos frescos; si no, usar datos del archivo
+if (API_URL && API_TOKEN) {
+  loadFromAPI().then(() => render());
+} else {
+  render();
+}
+</script>
+</body>
+</html>
